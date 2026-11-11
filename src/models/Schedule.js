@@ -2,22 +2,12 @@ import mongoose from "mongoose";
 
 const scheduleSchema = new mongoose.Schema(
   {
-    trainLine: {
-      type: String,
-      required: true,
-      trim: true,
+    id: {
+      type: Number,
+      min: 1,
+      validate: Number.isSafeInteger,
     },
-    trainNumber: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    departureStation: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    arrivalStation: {
+    tripId: {
       type: String,
       required: true,
       trim: true,
@@ -25,21 +15,42 @@ const scheduleSchema = new mongoose.Schema(
     departureTime: {
       type: String,
       required: true,
-      trim: true,
+      match: /^([01]\d|2[0-3]):[0-5]\d$/,
     },
     arrivalTime: {
       type: String,
       required: true,
-      trim: true,
+      match: /^([01]\d|2[0-3]):[0-5]\d$/,
     },
-    price: {
-      type: Number,
+    daysOfWeek: {
+      type: [
+        {
+          type: String,
+          enum: [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+          ],
+        },
+      ],
       required: true,
-      min: 0,
+      validate: {
+        validator: (days) => days.length > 0,
+        message: "daysOfWeek must contain at least one day",
+      },
+    },
+    status: {
+      type: Boolean,
+      required: true,
     },
   },
   {
-    timestamps: true,
+    strict: "throw",
+    versionKey: false,
   }
 );
 
