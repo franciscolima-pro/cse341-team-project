@@ -38,6 +38,13 @@ app.use((req, res, next) => {
 // Render the appropriate error page.
 app.use((err, req, res, next) => {
     const status = err.status || 500;
+
+    if (req.originalUrl.startsWith('/api/')) {
+        return res.status(status).json({
+            error: err.message || 'Internal Server Error'
+        });
+    }
+
     const template = status === 404 ? '404' : '500';
     const context = {
         title: status === 404 ? 'Page Not Found' : 'Server Error',
