@@ -179,6 +179,33 @@ article.route-detail {
                     text-align: center;
                 }
             }
+
+            .schedule-month-filters {
+                margin-top: var(--space-lg);
+
+                h3 {
+                    margin-bottom: var(--space-sm);
+                    font-size: var(--font-size-md);
+                }
+
+                .month-filter-button {
+                    appearance: none;
+                    cursor: pointer;
+                    font: inherit;
+
+                    &:hover,
+                    &[aria-pressed="true"] {
+                        background-color: var(--clr-primary-pale);
+                        border-color: var(--clr-primary);
+                        color: var(--clr-primary);
+                    }
+
+                    &:focus-visible {
+                        outline: 2px solid var(--clr-primary);
+                        outline-offset: 2px;
+                    }
+                }
+            }
         }
 
         .route-schedules {

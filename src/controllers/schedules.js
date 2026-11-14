@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Schedule from "../models/Schedule.js";
+import { getSchedulesByTripId } from "../models/schedules.js";
 
 const scheduleFields = new Set([
   "id",
@@ -46,6 +47,34 @@ const isRequestObject = (body) =>
 
 const hasOnlyScheduleFields = (body) =>
   Object.keys(body).every((field) => scheduleFields.has(field));
+
+const sendTripSchedulesError = (res, error, action) => {
+  console.error(`Error ${action}:`, error);
+  return res.status(500).json({
+    error: error.message || `Failed to ${action}`,
+  });
+};
+
+export async function getSchedulesForTrip(req, res) {
+  try {
+    const schedules = await getSchedulesByTripId(req.params.id);
+    return res.status(200).json(schedules);
+  } catch (error) {
+    return sendTripSchedulesError(res, error, "fetch schedules for trip");
+  }
+}
+
+export async function getSchedulesForTripAndMonth(req, res) {
+  try {
+    const schedules = await getSchedulesByTripId(
+      req.params.id,
+      req.query.month
+    );
+    return res.status(200).json(schedules);
+  } catch (error) {
+    return sendTripSchedulesError(res, error, "fetch schedules for trip and month");
+  }
+}
 
 export async function getAllSchedules(req, res) {
   try {

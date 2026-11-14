@@ -66,36 +66,28 @@
                 <span class="month-badge"><%= month %></span>
                 <% }); %>
             </div>
-        </div>
-
-        <% if (details.schedules && details.schedules.length > 0) { %>
-        <div class="route-schedules">
-            <h2>Available Schedules</h2>
-            <div class="schedules-grid">
-                <% details.schedules.forEach(function(schedule) { %>
-                <div class="schedule-card">
-                    <div class="schedule-times">
-                        <div class="time-block">
-                            <span class="time-label">Departs</span>
-                            <span class="time-value"><%= schedule.departureTime %></span>
-                        </div>
-                        <span class="time-arrow">→</span>
-                        <div class="time-block">
-                            <span class="time-label">Arrives</span>
-                            <span class="time-value"><%= schedule.arrivalTime %></span>
-                        </div>
-                    </div>
-                    <div class="schedule-days">
-                        <% schedule.daysOfWeek.forEach(function(day) { %>
-                        <span class="day-badge"><%= day.substring(0, 3) %></span>
-                        <% }); %>
-                    </div>
-                    <a href="/trips/booking/<%= schedule.id %>" class="book-btn">Book Now</a>
+            <div class="schedule-month-filters">
+                <h3>Filter schedules by month</h3>
+                <div class="months-grid" role="group" aria-label="Filter schedules by month">
+                    <% for (let month = 4; month <= 11; month += 1) { %>
+                    <button
+                        type="button"
+                        class="month-badge month-filter-button"
+                        data-schedule-month="<%= month %>"
+                        aria-pressed="false"
+                    ><%= month %></button>
+                    <% } %>
                 </div>
-                <% }); %>
             </div>
         </div>
-        <% } %>
+
+        <section class="route-schedules" data-trip-id="<%= details.id %>">
+            <h2>Available Schedules</h2>
+            <p class="schedules-status" role="status" aria-live="polite">
+                Select a month to view available schedules.
+            </p>
+            <div class="schedules-grid" data-schedules-grid></div>
+        </section>
     </div>
 </article>
 

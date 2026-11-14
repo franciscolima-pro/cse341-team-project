@@ -18,8 +18,8 @@ router.get('/trains', trainsPage);
 // Trains API
 router.get('/api/trains', trainsApi);
 
-// Schedules API
-router.use('/api/schedules', schedulesRouter);
+// Trip schedules API
+router.use('/api/trips', schedulesRouter);
 
 // Rail trips
 router.use('/trips', railTripsRouter);
