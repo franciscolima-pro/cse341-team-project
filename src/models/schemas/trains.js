@@ -58,6 +58,7 @@ const trainSchema = new mongoose.Schema(
       type: String,
       required: false,
       trim: true,
+      required: false,
     },
   },
   {
