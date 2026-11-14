@@ -25,6 +25,21 @@ const scheduleFixtures = [
 ];
 
 describe("Trip schedules API", () => {
+  test("serves Swagger UI and documents the trip schedules endpoint", async () => {
+    const uiResponse = await request(app).get("/api-docs");
+    const uiPageResponse = await request(app).get("/api-docs/");
+    const specResponse = await request(app).get("/api-docs.json");
+
+    expect(uiResponse.status).toBe(301);
+    expect(uiResponse.headers.location).toBe("/api-docs/");
+    expect(uiPageResponse.status).toBe(200);
+    expect(uiPageResponse.text).toContain("swagger-ui");
+    expect(specResponse.status).toBe(200);
+    expect(specResponse.body.paths["/api/trips/{id}/schedules"].get.summary).toBe(
+      "Get schedules for a trip"
+    );
+  });
+
   test("renders trip details with client-side schedule controls", async () => {
     const response = await request(app).get("/trips/alpine-panorama");
 
