@@ -4,13 +4,9 @@
 		"ejs": "^6.0.1",
 		"express": "^5.1.0",
 		"mongodb": "^7.5.0",
-<<<<<<< HEAD
 		"mongoose": "^9.12.1",
 		"swagger-jsdoc": "^6.3.0",
 		"swagger-ui-express": "^5.0.1"
-=======
-		"mongoose": "^9.12.1"
->>>>>>> f7542be798a600a14af51322d277711d047ddd5f
 	},
 	"scripts": {
 		"db:import": "node --env-file=.env src/db/import.js",
