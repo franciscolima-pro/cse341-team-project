@@ -69,14 +69,14 @@
             <div class="schedule-month-filters">
                 <h3>Filter schedules by month</h3>
                 <div class="months-grid" role="group" aria-label="Filter schedules by month">
-                    <% for (let month = 4; month <= 11; month += 1) { %>
+                    <% details.operatingMonths.forEach(function(month) { %>
                     <button
                         type="button"
                         class="month-badge month-filter-button"
                         data-schedule-month="<%= month %>"
                         aria-pressed="false"
                     ><%= month %></button>
-                    <% } %>
+                    <% }); %>
                 </div>
             </div>
         </div>
