@@ -279,12 +279,7 @@ const hookTrainsCatalog = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-<<<<<<< HEAD
-    hookRegionSorter();
-    hookSeasonSorter();
-    hookTripScheduleFilters();
-=======
     hookTripsCatalog();
->>>>>>> f7542be798a600a14af51322d277711d047ddd5f
+    hookTripScheduleFilters();
     hookTrainsCatalog();
 });
