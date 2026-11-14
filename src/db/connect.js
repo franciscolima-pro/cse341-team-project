@@ -16,6 +16,7 @@ const connectToDb = async (options = {}) => {
     throw new Error('MONGODB_URI is required.');
   }
 
+<<<<<<< HEAD
   client = new MongoClient(connectionString);
   await client.connect();
   database = client.db(databaseName);
@@ -30,6 +31,19 @@ const connectToDb = async (options = {}) => {
   }
 
   return database;
+=======
+  await mongoose.connect(connectionString, { dbName: databaseName });
+
+  try {
+    client = new MongoClient(connectionString);
+    await client.connect();
+    database = client.db(databaseName);
+    return database;
+  } catch (error) {
+    await mongoose.disconnect();
+    throw error;
+  }
+>>>>>>> f7542be798a600a14af51322d277711d047ddd5f
 };
 
 const getDb = () => {
@@ -40,10 +54,20 @@ const getDb = () => {
 };
 
 const closeDb = async () => {
+<<<<<<< HEAD
   const closeClient = client?.close();
   client = undefined;
   database = undefined;
   await Promise.all([closeClient, mongoose.disconnect()]);
+=======
+  await mongoose.disconnect();
+
+  if (client) {
+    await client.close();
+    client = undefined;
+    database = undefined;
+  }
+>>>>>>> f7542be798a600a14af51322d277711d047ddd5f
 };
 
 export { closeDb, connectToDb, getDb };
