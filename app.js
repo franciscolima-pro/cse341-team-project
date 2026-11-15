@@ -4,9 +4,23 @@ import { fileURLToPath } from 'url';
 import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
 import routes from './src/routes/router.js';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
+
+const swaggerSpec = swaggerJsdoc({
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Kizuna Rail API',
+            version: pkg.version
+        },
+        servers: [{ url: '/' }]
+    },
+    apis: [Path.join(__dirname, 'src/routes/*.js').replace(/\\/g, '/')]
+});
 
 const app = express();
 
@@ -26,6 +40,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(globalMiddleware);
+app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/', routes);
 
 // Catch requests that did not match a route.
@@ -38,6 +54,13 @@ app.use((req, res, next) => {
 // Render the appropriate error page.
 app.use((err, req, res, next) => {
     const status = err.status || 500;
+
+    if (req.originalUrl.startsWith('/api/')) {
+        return res.status(status).json({
+            error: err.message || 'Internal Server Error'
+        });
+    }
+
     const template = status === 404 ? '404' : '500';
     const context = {
         title: status === 404 ? 'Page Not Found' : 'Server Error',

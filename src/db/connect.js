@@ -16,15 +16,17 @@ const connectToDb = async (options = {}) => {
     throw new Error('MONGODB_URI is required.');
   }
 
-  await mongoose.connect(connectionString, { dbName: databaseName });
-
   try {
+    await mongoose.connect(connectionString, { dbName: databaseName });
     client = new MongoClient(connectionString);
     await client.connect();
     database = client.db(databaseName);
     return database;
   } catch (error) {
-    await mongoose.disconnect();
+    const closeClient = client?.close();
+    client = undefined;
+    database = undefined;
+    await Promise.all([closeClient, mongoose.disconnect()]);
     throw error;
   }
 };
@@ -37,13 +39,10 @@ const getDb = () => {
 };
 
 const closeDb = async () => {
-  await mongoose.disconnect();
-
-  if (client) {
-    await client.close();
-    client = undefined;
-    database = undefined;
-  }
+  const closeClient = client?.close();
+  client = undefined;
+  database = undefined;
+  await Promise.all([closeClient, mongoose.disconnect()]);
 };
 
 export { closeDb, connectToDb, getDb };

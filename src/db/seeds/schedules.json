@@ -5,6 +5,7 @@
         "departureTime": "08:30",
         "arrivalTime": "13:00",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "months": [4, 5, 6, 7, 8],
         "status": true
     },
     {
@@ -13,6 +14,7 @@
         "departureTime": "13:15",
         "arrivalTime": "17:45",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "saturday"],
+        "months": [6, 7, 8, 9, 10, 11],
         "status": true
     },
     {
@@ -21,6 +23,7 @@
         "departureTime": "09:00",
         "arrivalTime": "14:00",
         "daysOfWeek": ["monday", "wednesday", "friday", "saturday", "sunday"],
+        "months": [1, 2, 3, 4, 5, 6],
         "status": true
     },
     {
@@ -29,6 +32,7 @@
         "departureTime": "14:30",
         "arrivalTime": "19:30",
         "daysOfWeek": ["tuesday", "thursday", "saturday", "sunday"],
+        "months": [7, 8, 9, 10, 11, 12],
         "status": false
     },
     {
@@ -37,6 +41,7 @@
         "departureTime": "10:00",
         "arrivalTime": "12:30",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "friday", "saturday"],
+        "months": [3, 4, 5, 6],
         "status": true
     },
     {
@@ -45,6 +50,7 @@
         "departureTime": "15:00",
         "arrivalTime": "17:30",
         "daysOfWeek": ["monday", "tuesday", "thursday", "friday", "sunday"],
+        "months": [7, 8, 9, 10],
         "status": true
     },
     {
@@ -53,6 +59,7 @@
         "departureTime": "09:30",
         "arrivalTime": "11:00",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "saturday"],
+        "months": [4, 5, 6, 7],
         "status": true
     },
     {
@@ -61,6 +68,7 @@
         "departureTime": "12:00",
         "arrivalTime": "13:30",
         "daysOfWeek": ["monday", "wednesday", "thursday", "friday", "sunday"],
+        "months": [8, 9, 10, 11],
         "status": true
     },
     {
@@ -69,6 +77,7 @@
         "departureTime": "14:30",
         "arrivalTime": "16:00",
         "daysOfWeek": ["saturday", "sunday"],
+        "months": [4, 5, 6, 7, 8, 9, 10, 11],
         "status": false
     },
     {
@@ -77,6 +86,7 @@
         "departureTime": "11:00",
         "arrivalTime": "13:00",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "months": [1, 2],
         "status": true
     },
     {
@@ -85,6 +95,7 @@
         "departureTime": "09:00",
         "arrivalTime": "09:30",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "saturday"],
+        "months": [3, 4, 5, 6],
         "status": true
     },
     {
@@ -93,6 +104,7 @@
         "departureTime": "11:00",
         "arrivalTime": "11:30",
         "daysOfWeek": ["monday", "wednesday", "thursday", "friday", "sunday"],
+        "months": [7, 8, 9, 10],
         "status": true
     },
     {
@@ -101,6 +113,7 @@
         "departureTime": "13:00",
         "arrivalTime": "13:30",
         "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "months": [11, 12],
         "status": true
     },
     {
@@ -109,6 +122,7 @@
         "departureTime": "15:00",
         "arrivalTime": "15:30",
         "daysOfWeek": ["saturday", "sunday"],
+        "months": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         "status": false
     }
 ]

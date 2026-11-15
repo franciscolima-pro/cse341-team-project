@@ -1,5 +1,6 @@
 import apiRoutes from './api-routes.js';
 import ejsRoutes from './ejs-routes.js';
+import schedulesRouter from './schedules.js';
 import { trainsPage } from './trains.js';
 import { Router } from 'express';
 import { homePage, aboutPage, testErrorPage } from './index.js';
@@ -15,7 +16,11 @@ router.get('/about', aboutPage);
 // Trains page
 router.get('/trains', trainsPage);
 
+// API routes
 router.use('/api', apiRoutes);
+router.use('/api/trips', schedulesRouter);
+
+// Page routes
 router.use(ejsRoutes);
 
 // Test 500 error page
