@@ -1,3 +1,4 @@
+
 import trips from './seeds/trips.json' with { type: 'json' };
 import schedules from './seeds/schedules.json' with { type: 'json' };
 import stations from './seeds/stations.json' with { type: 'json' };
@@ -30,9 +31,29 @@ const initializeDatabase = async (db) => {
     await collection.insertMany(documents);
   }
 
-  const confirmations = db.collection('confirmations');
-  await confirmations.deleteMany({});
-  await confirmations.createIndex({ id: 1 }, { unique: true });
+  const existingCollections = await db.listCollections({}, { nameOnly: true }).toArray();
+  const collectionNames = existingCollections.map((collection) => collection.name);
+
+  if (collectionNames.includes('confirmations')) {
+    if (!collectionNames.includes('bookings')) {
+      await db.collection('confirmations').rename('bookings');
+    } else {
+      const confirmations = db.collection('confirmations');
+      const bookings = db.collection('bookings');
+
+      for await (const confirmation of confirmations.find({})) {
+        await bookings.updateOne(
+          { id: confirmation.id },
+          { $setOnInsert: confirmation },
+          { upsert: true }
+        );
+      }
+
+      await confirmations.drop();
+    }
+  }
+
+  await db.collection('bookings').createIndex({ id: 1 }, { unique: true });
 };
 
 export { initializeDatabase, starterCollections };
