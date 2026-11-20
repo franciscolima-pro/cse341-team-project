@@ -1,0 +1,81 @@
+
+<%- include('partials/header') %>
+
+<main class="bookings-admin-page">
+    <header class="confirmation-header">
+        <h1 class="confirmation-title"><%= title %></h1>
+        <p class="confirmation-message">
+            View and manage customer bookings.
+        </p>
+    </header>
+
+    <section class="booking-details">
+        <h2 class="section-title">All Bookings</h2>
+
+        <div id="bookings-list">
+            <p id="loading-message">Loading bookings...</p>
+        </div>
+    </section>
+</main>
+
+<script>
+    async function loadBookings() {
+        const bookingsList = document.getElementById('bookings-list');
+
+        try {
+            const response = await fetch('/api/bookings');
+
+            if (!response.ok) {
+                throw new Error('Failed to load bookings.');
+            }
+
+            const bookings = await response.json();
+
+            if (bookings.length === 0) {
+                bookingsList.textContent = 'No bookings found.';
+                return;
+            }
+
+            bookingsList.innerHTML = '';
+
+            bookings.forEach((booking) => {
+                const card = document.createElement('article');
+                card.className = 'detail-card';
+
+                const heading = document.createElement('h3');
+                heading.textContent = `Booking: ${booking.id}`;
+
+                const ticket = document.createElement('p');
+                ticket.textContent = `Ticket Class: ${booking.ticketClass}`;
+
+                const day = document.createElement('p');
+                day.textContent = `Travel Day: ${booking.selectedDay}`;
+
+                const passengers = document.createElement('p');
+                passengers.textContent =
+                    `Passengers: ${booking.passengers.length}`;
+
+                const date = document.createElement('p');
+                date.textContent =
+                    `Booked On: ${new Date(booking.createdAt).toLocaleDateString()}`;
+
+                card.append(heading, ticket, day, passengers, date);
+
+                booking.passengers.forEach((passenger, index) => {
+                    const passengerInfo = document.createElement('p');
+                    passengerInfo.textContent =
+                        `Passenger ${index + 1}: ${passenger.firstName} ${passenger.lastName} — ${passenger.email}`;
+                    card.appendChild(passengerInfo);
+                });
+
+                bookingsList.appendChild(card);
+            });
+        } catch (error) {
+            bookingsList.textContent = error.message;
+        }
+    }
+
+    loadBookings();
+</script>
+
+<%- include('partials/footer') %>

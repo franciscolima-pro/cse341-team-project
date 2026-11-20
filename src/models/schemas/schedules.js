@@ -8,7 +8,7 @@ const scheduleSchema = new mongoose.Schema(
       unique: true,
     },
     tripId: {
-      type: Number,
+      type: String,
       required: true,
     },
     departureTime: {

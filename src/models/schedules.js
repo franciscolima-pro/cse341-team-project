@@ -21,9 +21,6 @@ export async function getSchedulesByTripId(tripId, month) {
     filter.tripId = new mongoose.Types.ObjectId(tripId);
   }
 
-  if (!isNumericTripId) {
-    return schedule.collection.find(filter).toArray();
-  }
+  return schedule.collection.find(filter).toArray();
 
-  return schedule.find(filter).lean();
 }
