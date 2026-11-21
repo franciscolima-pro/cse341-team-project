@@ -1,0 +1,57 @@
+<%- include('./partials/header') %>
+<article class="booking-page">
+    <div class="route-header">
+        <div class="route-header-content">
+            <h1 class="route-name"><%= title %></h1>
+            <p class="route-description">Sign in to your account.</p>
+        </div>
+    </div>
+
+    <% if (message) { %>
+        <p role="status"><%= message %></p>
+    <% } %>
+    <% if (error) { %>
+        <p role="alert"><%= error %></p>
+    <% } %>
+
+    <form class="booking-form" method="POST" action="/login">
+        <section class="passengers-section">
+            <div class="passengers-list">
+                <div class="passenger-card">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="form-input"
+                                autocomplete="email"
+                                value="<%= email || '' %>"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="form-input"
+                                autocomplete="current-password"
+                                required
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </div>
+    </form>
+
+    <p>New to Kizuna Rail? <a href="/register">Create an account</a>.</p>
+</article>
+<%- include('./partials/footer') %>

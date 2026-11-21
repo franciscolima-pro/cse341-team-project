@@ -1,0 +1,78 @@
+<%- include('./partials/header') %>
+<article class="booking-page">
+    <div class="route-header">
+        <div class="route-header-content">
+            <h1 class="route-name"><%= title %></h1>
+            <p class="route-description">Create an account to get started.</p>
+        </div>
+    </div>
+
+    <% if (error) { %>
+        <p role="alert"><%= error %></p>
+    <% } %>
+
+    <form class="booking-form" method="POST" action="/register">
+        <section class="passengers-section">
+            <div class="passengers-list">
+                <div class="passenger-card">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Display Name</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                class="form-input"
+                                autocomplete="name"
+                                value="<%= formData.name || '' %>"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="username" class="form-label">Username</label>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                class="form-input"
+                                autocomplete="username"
+                                value="<%= formData.username || '' %>"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="form-input"
+                                autocomplete="email"
+                                value="<%= formData.email || '' %>"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="form-input"
+                                autocomplete="new-password"
+                                required
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Account</button>
+        </div>
+    </form>
+
+    <p>Already have an account? <a href="/login">Sign in</a>.</p>
+</article>
+<%- include('./partials/footer') %>

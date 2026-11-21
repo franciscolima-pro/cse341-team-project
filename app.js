@@ -1,8 +1,10 @@
 import express from 'express';
+import session from 'express-session';
 import Path from 'path';
 import { fileURLToPath } from 'url';
 import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
+import { loadSessionUser } from './src/middleware/auth.js';
 import routes from './src/routes/router.js';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
@@ -39,6 +41,22 @@ app.set('views', Path.join(__dirname, 'src/views'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+if (!process.env.SESSION_SECRET) {
+    throw new Error('SESSION_SECRET is required to configure authentication sessions.');
+}
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV?.toLowerCase() === 'production'
+    }
+}));
+
+app.use(loadSessionUser);
 app.use(globalMiddleware);
 app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
