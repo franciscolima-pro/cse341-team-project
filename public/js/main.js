@@ -278,8 +278,88 @@ const hookTrainsCatalog = async () => {
     }
 };
 
+const hookDashboardBookings = async () => {
+    const dashboard = document.querySelector('.dashboard-page[data-user-email]');
+    const listEl = document.getElementById('dashboard-bookings-list');
+    const loadingEl = document.getElementById('dashboard-bookings-loading');
+    const emptyEl = document.getElementById('dashboard-bookings-empty');
+    const errorEl = document.getElementById('dashboard-bookings-error');
+
+    if (!dashboard || !listEl || !loadingEl || !emptyEl || !errorEl) {
+        return;
+    }
+
+    const userEmail = dashboard.dataset.userEmail.toLowerCase();
+
+    try {
+        const response = await fetch('/api/bookings');
+        if (!response.ok) {
+            throw new Error(`Failed to load bookings (${response.status})`);
+        }
+
+        const bookings = await response.json();
+        if (!Array.isArray(bookings)) {
+            throw new Error('Booking response was not an array');
+        }
+
+        const matchingBookings = bookings.filter((booking) =>
+            Array.isArray(booking.passengers)
+            && booking.passengers.some((passenger) =>
+                typeof passenger.email === 'string'
+                && passenger.email.trim().toLowerCase() === userEmail
+            )
+        );
+
+        if (matchingBookings.length === 0) {
+            emptyEl.hidden = false;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        matchingBookings.forEach((booking) => {
+            const card = document.createElement('article');
+            card.className = 'detail-card';
+
+            const heading = document.createElement('h3');
+            heading.textContent = `Booking: ${booking.id}`;
+
+            const ticket = document.createElement('p');
+            ticket.textContent = `Ticket Class: ${booking.ticketClass || ''}`;
+
+            const day = document.createElement('p');
+            day.textContent = `Travel Day: ${booking.selectedDay || ''}`;
+
+            const date = document.createElement('p');
+            date.textContent = `Booked On: ${new Date(booking.createdAt).toLocaleDateString()}`;
+
+            card.append(heading, ticket, day, date);
+            booking.passengers
+                .filter((passenger) =>
+                    typeof passenger.email === 'string'
+                    && passenger.email.trim().toLowerCase() === userEmail
+                )
+                .forEach((passenger) => {
+                    const passengerInfo = document.createElement('p');
+                    passengerInfo.textContent =
+                        `Passenger: ${passenger.firstName} ${passenger.lastName} - ${passenger.email}`;
+                    card.appendChild(passengerInfo);
+                });
+
+            fragment.appendChild(card);
+        });
+
+        listEl.replaceChildren(fragment);
+    } catch (error) {
+        console.error('Error loading dashboard bookings:', error);
+        errorEl.hidden = false;
+    } finally {
+        loadingEl.hidden = true;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     hookTripsCatalog();
     hookTripScheduleFilters();
     hookTrainsCatalog();
+    hookDashboardBookings();
 });

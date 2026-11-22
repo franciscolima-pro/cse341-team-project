@@ -88,6 +88,7 @@ const login = async (req, res, next) => {
       id: user._id.toString(),
       name: user.name,
       username: user.username,
+      email: user.email,
       role: user.role.name
     };
 
@@ -101,7 +102,7 @@ const login = async (req, res, next) => {
       });
     });
 
-    return res.redirect('/trips');
+    return res.redirect(user.role.name === 'admin' ? '/admin' : '/dashboard');
   } catch (error) {
     return next(error);
   }
