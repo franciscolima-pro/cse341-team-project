@@ -5,7 +5,10 @@ import stations from './seeds/stations.json' with { type: 'json' };
 import ticketClasses from './seeds/ticket-classes.json' with { type: 'json' };
 import trains from './seeds/trains.json' with { type: 'json' };
 
+const roles = [{ name: 'customer' }, { name: 'admin' }];
+
 const starterCollections = [
+  ['roles', roles],
   ['trips', trips],
   ['schedules', schedules.map((schedule) => {
     if (Array.isArray(schedule.months)) {

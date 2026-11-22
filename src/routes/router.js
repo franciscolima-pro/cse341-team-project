@@ -3,7 +3,16 @@ import ejsRoutes from './ejs-routes.js';
 import schedulesRouter from './schedules.js';
 import { trainsPage } from './trains.js';
 import { Router } from 'express';
-import { homePage, aboutPage, testErrorPage } from './index.js';
+import {
+    homePage,
+    aboutPage,
+    registerPage,
+    loginPage,
+    adminDashboardPage,
+    testErrorPage
+} from './index.js';
+import { register, login, logout } from '../controllers/auth.js';
+import { requirePageRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -12,6 +21,14 @@ router.get('/', homePage);
 
 // About page
 router.get('/about', aboutPage);
+
+// Authentication pages
+router.get('/register', registerPage);
+router.get('/login', loginPage);
+router.post('/register', register);
+router.post('/login', login);
+router.post('/logout', logout);
+router.get('/admin', requirePageRole('admin'), adminDashboardPage);
 
 // Trains page
 router.get('/trains', trainsPage);
