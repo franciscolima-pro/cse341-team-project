@@ -40,4 +40,38 @@ const findUserByEmail = async (email) => User.findOne({
 
 const verifyPassword = async (password, passwordHash) => bcrypt.compare(password, passwordHash);
 
-export { createUser, findUserByEmail, verifyPassword };
+const getUsers = async (userId, isAdmin) => {
+  const filter = isAdmin ? {} : { _id: userId };
+
+  return User.find(filter)
+    .select('-passwordHash')
+    .populate('role', 'name')
+    .lean();
+};
+
+const updateUser = async (userId, updates) => {
+  return User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        name: updates.name.trim(),
+        username: updates.username.trim(),
+        email: updates.email.trim().toLowerCase()
+      }
+    },
+    { new: true, runValidators: true }
+  ).select('-passwordHash').populate('role', 'name');
+};
+
+const deleteUser = async (userId) => {
+  return User.findByIdAndDelete(userId);
+};
+
+export {
+  createUser,
+  findUserByEmail,
+  verifyPassword,
+  getUsers,
+  updateUser,
+  deleteUser
+};
