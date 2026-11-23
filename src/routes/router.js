@@ -1,3 +1,5 @@
+import { requirePageLogin } from '../middleware/auth.js';
+import { userAdminPage } from '../controllers/users.js';
 import apiRoutes from './api-routes.js';
 import ejsRoutes from './ejs-routes.js';
 import schedulesRouter from './schedules.js';
@@ -29,6 +31,9 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/admin', requirePageRole('admin'), adminDashboardPage);
+
+
+router.get('/users/admin', requirePageLogin, userAdminPage);
 
 // Trains page
 router.get('/trains', trainsPage);

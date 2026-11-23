@@ -4,6 +4,14 @@ import { getAllTrips, getTripById } from '../controllers/trips.js';
 import { getAllBookingsController } from '../controllers/bookings.js';
 import { trainsApi } from './trains.js';
 import schedulesRouter from './schedules.js';
+import {
+    getUsersController,
+    updateUserController,
+    deleteUserController
+} from '../controllers/users.js';
+
+import { requireApiLogin } from '../middleware/auth.js';
+
 
 const router = Router();
 
@@ -167,5 +175,9 @@ router.get('/bookings', getAllBookingsController);
 router.get('/trains', trainsApi);
 
 router.use('/trips', schedulesRouter);
+
+router.get('/users', requireApiLogin, getUsersController);
+router.patch('/users/:userId', requireApiLogin, updateUserController);
+router.delete('/users/:userId', requireApiLogin, deleteUserController);
 
 export default router;

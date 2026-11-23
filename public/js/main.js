@@ -278,8 +278,122 @@ const hookTrainsCatalog = async () => {
     }
 };
 
+const hookUserAdmin = async () => {
+    const listEl = document.getElementById('user-admin-list');
+    if (!listEl) return;
+
+    const loadingEl = document.getElementById('user-admin-loading');
+    const errorEl = document.getElementById('user-admin-error');
+
+    const loadUsers = async () => {
+        loadingEl.hidden = false;
+        errorEl.hidden = true;
+
+        try {
+            const response = await fetch('/api/users');
+            const payload = await response.json();
+
+            if (!response.ok) {
+                throw new Error(payload.message || 'Unable to load users.');
+            }
+
+            listEl.replaceChildren();
+
+            payload.users.forEach((user) => {
+                const card = document.createElement('form');
+                card.className = 'user-admin-card';
+
+                const fields = [
+                    ['name', 'Name'],
+                    ['username', 'Username'],
+                    ['email', 'Email']
+                ];
+
+                fields.forEach(([field, label]) => {
+                    const wrapper = document.createElement('div');
+                    const labelEl = document.createElement('label');
+                    const input = document.createElement('input');
+
+                    labelEl.textContent = label;
+                    input.type = field === 'email' ? 'email' : 'text';
+                    input.name = field;
+                    input.value = user[field] || '';
+                    input.required = true;
+
+                    wrapper.append(labelEl, input);
+                    card.append(wrapper);
+                });
+
+                const role = document.createElement('p');
+                role.textContent = `Role: ${user.role?.name || 'Unknown'}`;
+                card.append(role);
+
+                const saveButton = document.createElement('button');
+                saveButton.type = 'submit';
+                saveButton.textContent = 'Save Changes';
+                card.append(saveButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.textContent = 'Delete User';
+                card.append(deleteButton);
+
+                card.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+
+                    const updates = Object.fromEntries(new FormData(card));
+
+                    try {
+                        const result = await fetch(`/api/users/${user._id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updates)
+                        });
+
+                        const data = await result.json();
+                        if (!result.ok) throw new Error(data.message);
+
+                        await loadUsers();
+                    } catch (error) {
+                        errorEl.textContent = error.message;
+                        errorEl.hidden = false;
+                    }
+                });
+
+                deleteButton.addEventListener('click', async () => {
+                    if (!confirm(`Delete ${user.username}?`)) return;
+
+                    try {
+                        const result = await fetch(`/api/users/${user._id}`, {
+                            method: 'DELETE'
+                        });
+
+                        const data = await result.json();
+                        if (!result.ok) throw new Error(data.message);
+
+                        await loadUsers();
+                    } catch (error) {
+                        errorEl.textContent = error.message;
+                        errorEl.hidden = false;
+                    }
+                });
+
+                listEl.append(card);
+            });
+        } catch (error) {
+            errorEl.textContent = error.message;
+            errorEl.hidden = false;
+        } finally {
+            loadingEl.hidden = true;
+        }
+    };
+
+    await loadUsers();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     hookTripsCatalog();
     hookTripScheduleFilters();
     hookTrainsCatalog();
+    hookUserAdmin();
 });
