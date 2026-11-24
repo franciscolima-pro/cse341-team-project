@@ -9,10 +9,11 @@ import {
     registerPage,
     loginPage,
     adminDashboardPage,
+    standardDashboardPage,
     testErrorPage
 } from './index.js';
 import { register, login, logout } from '../controllers/auth.js';
-import { requirePageRole } from '../middleware/auth.js';
+import { requirePageLogin, requirePageRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -29,6 +30,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/admin', requirePageRole('admin'), adminDashboardPage);
+router.get('/dashboard', requirePageLogin, standardDashboardPage);
 
 // Trains page
 router.get('/trains', trainsPage);

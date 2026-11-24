@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+<section class="dashboard-page" data-user-email="<%= user.email %>">
+    <header class="confirmation-header">
+        <h1 class="confirmation-title">Welcome, <%= user.name %></h1>
+    </header>
+
+    <nav aria-label="Dashboard links">
+        <a href="/bookings-admin">Booking Admin</a>
+        <a href="/users-admin">User Admin</a>
+    </nav>
+
+    <section class="booking-details">
+        <h2 class="section-title">Your Bookings</h2>
+        <p id="dashboard-bookings-loading">Loading bookings...</p>
+        <p id="dashboard-bookings-empty" hidden>No matching bookings found.</p>
+        <p id="dashboard-bookings-error" hidden>Unable to load bookings. Please try again.</p>
+        <div id="dashboard-bookings-list"></div>
+    </section>
+</section>
+<%- include('partials/footer') %>

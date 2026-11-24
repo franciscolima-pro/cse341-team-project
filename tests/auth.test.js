@@ -40,11 +40,22 @@ describe('Authentication', () => {
             .send({ email: account.email, password: account.password });
 
         expect(loginResponse.status).toBe(302);
-        expect(loginResponse.headers.location).toBe('/trips');
+        expect(loginResponse.headers.location).toBe('/dashboard');
 
         const signedInPage = await browser.get('/');
         expect(signedInPage.text).toContain('testuser (customer)');
-        expect(signedInPage.text).toContain('Sign Out');
+        expect(signedInPage.text).toContain('href="/dashboard">Dashboard</a>');
+        expect(signedInPage.text).toContain('action="/logout"');
+        expect(signedInPage.text).toContain('>Logout</button>');
+        expect(signedInPage.text).not.toContain('href="/login"');
+        expect(signedInPage.text).not.toContain('href="/register"');
+
+        const dashboardResponse = await browser.get('/dashboard');
+        expect(dashboardResponse.status).toBe(200);
+        expect(dashboardResponse.text).toContain(`Welcome, ${account.name}`);
+        expect(dashboardResponse.text).toContain('href="/bookings-admin"');
+        expect(dashboardResponse.text).toContain('href="/users-admin"');
+        expect(dashboardResponse.text).toContain(`data-user-email="${account.email.toLowerCase()}"`);
 
         const logoutResponse = await browser.post('/logout');
         expect(logoutResponse.status).toBe(302);
@@ -52,7 +63,14 @@ describe('Authentication', () => {
 
         const signedOutPage = await browser.get('/');
         expect(signedOutPage.text).not.toContain('testuser (customer)');
-        expect(signedOutPage.text).toContain('Sign In');
+        expect(signedOutPage.text).toContain('href="/login">Login</a>');
+        expect(signedOutPage.text).toContain('href="/register">Register</a>');
+        expect(signedOutPage.text).not.toContain('>Logout</button>');
+        expect(signedOutPage.text).not.toContain('>Dashboard</a>');
+
+        const signedOutDashboard = await browser.get('/dashboard');
+        expect(signedOutDashboard.status).toBe(302);
+        expect(signedOutDashboard.headers.location).toBe('/login');
     });
 
     test('rejects duplicate accounts and invalid login credentials', async () => {

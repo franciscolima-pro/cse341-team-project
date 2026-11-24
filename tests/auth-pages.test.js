@@ -20,4 +20,11 @@ describe('Authentication pages', () => {
         expect(response.text).toContain('name="email"');
         expect(response.text).toContain('name="password"');
     });
+
+    test('redirects a visitor from the dashboard to login', async () => {
+        const response = await request(app).get('/dashboard');
+
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBe('/login');
+    });
 });

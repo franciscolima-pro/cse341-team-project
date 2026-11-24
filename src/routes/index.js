@@ -27,10 +27,22 @@ const adminDashboardPage = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard' });
 };
 
+const standardDashboardPage = (req, res) => {
+    res.render('dashboard', { title: 'User Dashboard' });
+};
+
 const testErrorPage = (req, res, next) => {
     const err = new Error('This is a test error so you can see what it looks like.');
     err.status = 500;
     next(err);
 };
 
-export { homePage, aboutPage, registerPage, loginPage, adminDashboardPage, testErrorPage };
+export {
+    homePage,
+    aboutPage,
+    registerPage,
+    loginPage,
+    adminDashboardPage,
+    standardDashboardPage,
+    testErrorPage
+};

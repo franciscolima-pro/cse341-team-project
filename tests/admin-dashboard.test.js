@@ -50,10 +50,12 @@ describe('Admin dashboard', () => {
             .type('form')
             .send({ email: account.email, password: account.password });
         expect(loginResponse.status).toBe(302);
+        expect(loginResponse.headers.location).toBe('/admin');
 
         const response = await browser.get('/admin');
 
         expect(response.status).toBe(200);
         expect(response.text).toContain('Welcome to the Admin Dashboard');
+        expect(response.text).toContain('href="/admin">Dashboard</a>');
     });
 });
