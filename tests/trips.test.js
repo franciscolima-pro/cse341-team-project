@@ -73,6 +73,97 @@ describe('GET /api/trips', () => {
         expect(response.body.errors[0].field).toBe(field);
     });
 
+    // 2-Filters: Search both indexed text fields: trip names and descriptions.
+    test('searches trip names and descriptions', async () => {
+        const nameResponse = await request(app).get('/api/trips?q=Coastal');
+        const descriptionResponse = await request(app).get('/api/trips?q=coastline');
+
+        expect(nameResponse.status).toBe(200);
+        expect(nameResponse.body.trips.map((trip) => trip.id)).toContain('coastal-breeze');
+        expect(descriptionResponse.status).toBe(200);
+        expect(descriptionResponse.body.trips.map((trip) => trip.id)).toContain('coastal-breeze');
+    });
+
+    // 2-Filters: Combine keyword, region, and season filters before calculating pagination totals.
+    test('combines search and exact filters before paginating', async () => {
+        const firstFilteredPage = await request(app)
+            .get('/api/trips')
+            .query({ region: 'central', season: 'autumn', limit: 1 });
+        const secondFilteredPage = await request(app)
+            .get('/api/trips')
+            .query({ region: 'central', season: 'autumn', limit: 1, page: 2 });
+        const combinedResponse = await request(app)
+            .get('/api/trips')
+            .query({
+                q: 'Alpine',
+                region: 'central',
+                season: 'autumn',
+                limit: 1
+            });
+
+        expect(firstFilteredPage.status).toBe(200);
+        expect(firstFilteredPage.body.trips[0].id).toBe('alpine-panorama');
+        expect(secondFilteredPage.body.trips[0].id).toBe('gorge-explorer');
+        expect(firstFilteredPage.body.pagination).toMatchObject({
+            totalItems: 2,
+            totalPages: 2,
+            hasNextPage: true,
+            hasPreviousPage: false
+        });
+        expect(secondFilteredPage.body.pagination).toMatchObject({
+            totalItems: 2,
+            totalPages: 2,
+            hasNextPage: false,
+            hasPreviousPage: true
+        });
+        expect(combinedResponse.status).toBe(200);
+        expect(combinedResponse.body.trips).toHaveLength(1);
+        expect(combinedResponse.body.query).toEqual({
+            q: 'Alpine',
+            region: 'central',
+            season: 'autumn'
+        });
+        expect(combinedResponse.body.pagination.totalItems).toBe(1);
+        expect(combinedResponse.body.filters.regions).toContain('hokkaido');
+        expect(combinedResponse.body.filters.seasons).toContain('winter');
+    });
+
+    // 2-Filters: Return a successful empty page when a valid search has no matches.
+    test('returns an empty result for a search with no matches', async () => {
+        const response = await request(app).get('/api/trips?q=unmatchedterm');
+
+        expect(response.status).toBe(200);
+        expect(response.body.trips).toEqual([]);
+        expect(response.body.pagination).toMatchObject({
+            totalItems: 0,
+            totalPages: 0
+        });
+    });
+
+    // 2-Filters: Reject malformed or unsupported search and exact-filter parameters.
+    test.each([
+        ['q=', 'q'],
+        ['q=Alpine&q=Coastal', 'q'],
+        [`q=${'x'.repeat(101)}`, 'q'],
+        ['region=unknown', 'region'],
+        ['season=monsoon', 'season']
+    ])('rejects invalid %s filter parameters', async (query, field) => {
+        const response = await request(app).get(`/api/trips?${query}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body.errors[0].field).toBe(field);
+    });
+
+    // 2-Filters: Verify the API specification describes all search and filter parameters.
+    test('documents search and filter query parameters in Swagger', async () => {
+        const response = await request(app).get('/api-docs.json');
+        const parameters = response.body.paths['/api/trips'].get.parameters;
+
+        expect(response.status).toBe(200);
+        expect(parameters.map((parameter) => parameter.name))
+            .toEqual(expect.arrayContaining(['q', 'region', 'season']));
+    });
+
     test('returns a trip by ID', async () => {
         const response = await request(app).get('/api/trips/alpine-panorama');
 
@@ -100,6 +191,9 @@ describe('Trip pages', () => {
         expect(response.text).toContain('id="trip-card-template"');
         expect(response.text).toContain('id="trips-list"');
         expect(response.text).toContain('id="trips-pagination"');
+        // 2-Filters: Ensure the page exposes the keyword search form.
+        expect(response.text).toContain('id="trip-search-form"');
+        expect(response.text).toContain('id="trip-search"');
         expect(response.text).not.toContain('Alpine Panorama Express');
     });
 

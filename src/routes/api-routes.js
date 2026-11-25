@@ -7,7 +7,8 @@ import schedulesRouter from './schedules.js';
 
 const router = Router();
 
-// 1-Pagination: Document the trips endpoint's pagination parameters and response metadata.
+// 1-Pagination: Document pagination options and metadata for the trips endpoint.
+// 2-Filters: Document text search and exact region/season filter parameters.
 /**
  * @swagger
  * components:
@@ -109,6 +110,23 @@ const router = Router();
  *           type: string
  *           enum: [asc, desc]
  *           default: asc
+ *       - in: query
+ *         name: q
+ *         description: Search trip names and descriptions.
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 100
+ *       - in: query
+ *         name: region
+ *         description: Filter by an available trip region.
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: season
+ *         description: Filter by an available best season.
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: A page of trips and pagination metadata
@@ -121,6 +139,29 @@ const router = Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Trip'
+ *                 query:
+ *                   type: object
+ *                   properties:
+ *                     q:
+ *                       type: string
+ *                       nullable: true
+ *                     region:
+ *                       type: string
+ *                       nullable: true
+ *                     season:
+ *                       type: string
+ *                       nullable: true
+ *                 filters:
+ *                   type: object
+ *                   properties:
+ *                     regions:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     seasons:
+ *                       type: array
+ *                       items:
+ *                         type: string
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -137,7 +178,7 @@ const router = Router();
  *                     hasPreviousPage:
  *                       type: boolean
  *       400:
- *         description: Invalid pagination, sort, or order parameter
+ *         description: Invalid pagination, sort, order, search, or filter parameter
  *       500:
  *         description: Failed to fetch trips
  *         content:
@@ -146,6 +187,7 @@ const router = Router();
  *               $ref: '#/components/schemas/ApiError'
  */
 // 1-Pagination: Connect GET /api/trips to the paginated trips controller.
+// 2-Filters: Route search and exact-filter requests through the same list controller.
 router.get('/trips', getAllTrips);
 
 /**
