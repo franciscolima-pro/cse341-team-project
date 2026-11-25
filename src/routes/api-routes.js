@@ -7,6 +7,7 @@ import schedulesRouter from './schedules.js';
 
 const router = Router();
 
+// 1-Pagination: Document the trips endpoint's pagination parameters and response metadata.
 /**
  * @swagger
  * components:
@@ -81,10 +82,36 @@ const router = Router();
  *
  * /api/trips:
  *   get:
- *     summary: Get all trips
+ *     summary: Get a paginated list of trips
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 50
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [name, region, bestSeason, distance, createdAt]
+ *           default: name
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
  *     responses:
  *       200:
- *         description: A list of trips
+ *         description: A page of trips and pagination metadata
  *         content:
  *           application/json:
  *             schema:
@@ -94,6 +121,23 @@ const router = Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Trip'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalItems:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNextPage:
+ *                       type: boolean
+ *                     hasPreviousPage:
+ *                       type: boolean
+ *       400:
+ *         description: Invalid pagination, sort, or order parameter
  *       500:
  *         description: Failed to fetch trips
  *         content:
@@ -101,6 +145,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
+// 1-Pagination: Connect GET /api/trips to the paginated trips controller.
 router.get('/trips', getAllTrips);
 
 /**

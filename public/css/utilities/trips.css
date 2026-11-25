@@ -7,6 +7,27 @@
     color: #8f1f1f;
 }
 
+/* 1-Pagination: Arrange page navigation controls and status as one centered row. */
+.trips-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin: var(--space-xl) 0;
+
+    /* 1-Pagination: Give each navigation button a clear clickable area. */
+    button {
+        padding: var(--space-sm) var(--space-md);
+        cursor: pointer;
+    }
+
+    /* 1-Pagination: Visually indicate when no adjacent page is available. */
+    button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+
 .routes-grid {
     display: flex;
     flex-direction: column;
