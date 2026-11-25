@@ -3,10 +3,8 @@ const hookTripsCatalog = async () => {
     const templateEl = document.getElementById('trip-card-template');
     const regionSelect = document.getElementById('region-filter');
     const seasonSelect = document.getElementById('season-filter');
-    const searchForm = document.getElementById('trip-search-form');
-    const searchInput = document.getElementById('trip-search');
 
-    if (listEl && templateEl && regionSelect && seasonSelect && searchForm && searchInput) {
+    if (listEl && templateEl && regionSelect && seasonSelect) {
         const loadingEl = document.getElementById('trips-loading');
         const errorEl = document.getElementById('trips-error');
         const emptyEl = document.getElementById('trips-empty');
@@ -19,16 +17,11 @@ const hookTripsCatalog = async () => {
         const query = new URLSearchParams(window.location.search);
         const requestedPage = Number(query.get('page'));
         let currentPage = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-        // 2-Filters: Restore search text from the URL when the list page is opened directly.
-        searchInput.value = query.get('q') ?? '';
 
         // 1-Pagination: Track requests so an older response cannot overwrite a newer page.
         let requestId = 0;
-        // 2-Filters: Populate dropdowns once with all supported filter values from the API.
-        let filtersInitialized = false;
 
-        // 2-Filters: Add available values and restore a matching filter from the URL.
-        const addFilterOptions = (select, values, initialValue) => {
+        const addFilterOptions = (select, values) => {
             const existingValues = new Set(
                 [...select.options].map((option) => option.value)
             );
@@ -42,9 +35,23 @@ const hookTripsCatalog = async () => {
                 select.append(option);
                 existingValues.add(value);
             });
-            if (values.includes(initialValue)) {
-                select.value = initialValue;
-            }
+        };
+
+        const applyFilters = () => {
+            let visibleTrips = 0;
+            listEl.querySelectorAll('.route-card').forEach((card) => {
+                const matchesRegion =
+                    regionSelect.value === 'all'
+                    || card.querySelector('.route-region').textContent === regionSelect.value;
+                const matchesSeason =
+                    seasonSelect.value === 'all'
+                    || card.querySelector('[data-field="season-label"]').textContent === seasonSelect.value;
+                card.hidden = !matchesRegion || !matchesSeason;
+                if (!card.hidden) {
+                    visibleTrips += 1;
+                }
+            });
+            emptyEl.hidden = visibleTrips > 0;
         };
 
         // 1-Pagination: Render only the trips returned for the currently selected page.
@@ -104,36 +111,17 @@ const hookTripsCatalog = async () => {
 
             // 1-Pagination: Request 10 trips for the selected page.
             const params = new URLSearchParams({ page: String(page), limit: '10' });
-            // 2-Filters: Send active keyword and exact-match dropdown values with each page request.
-            const searchText = searchInput.value.trim();
-            const selectedRegion = regionSelect.value !== 'all'
-                ? regionSelect.value
-                : (!filtersInitialized ? query.get('region') : null);
-            const selectedSeason = seasonSelect.value !== 'all'
-                ? seasonSelect.value
-                : (!filtersInitialized ? query.get('season') : null);
-            if (searchText) {
-                params.set('q', searchText);
-            }
-            if (selectedRegion && selectedRegion !== 'all') {
-                params.set('region', selectedRegion);
-            }
-            if (selectedSeason && selectedSeason !== 'all') {
-                params.set('season', selectedSeason);
-            }
 
             try {
-                // 1-Pagination: Fetch the requested page; 2-Filters: Include the active search and filters.
+                // 1-Pagination: Fetch the requested page using the API's page and limit parameters.
                 const response = await fetch(`/api/trips?${params}`);
                 if (!response.ok) {
                     throw new Error(`Failed to load trips (${response.status})`);
                 }
 
                 const payload = await response.json();
-                // 1-Pagination: Require page data and metadata; 2-Filters: Require filter choices for dropdowns.
-                if (!Array.isArray(payload.trips) || !payload.pagination
-                    || !Array.isArray(payload.filters?.regions)
-                    || !Array.isArray(payload.filters?.seasons)) {
+                // 1-Pagination: Ensure the API returned both the page data and its metadata.
+                if (!Array.isArray(payload.trips) || !payload.pagination) {
                     throw new Error('Trip response did not contain the expected data');
                 }
 
@@ -153,16 +141,16 @@ const hookTripsCatalog = async () => {
                     return;
                 }
 
-                // 2-Filters: Populate both menus from all available values, not just this result page.
-                if (!filtersInitialized) {
-                    addFilterOptions(regionSelect, payload.filters.regions, query.get('region'));
-                    addFilterOptions(seasonSelect, payload.filters.seasons, query.get('season'));
-                    filtersInitialized = true;
-                }
-
+                addFilterOptions(
+                    regionSelect,
+                    [...new Set(payload.trips.map((trip) => trip.region).filter(Boolean))]
+                );
+                addFilterOptions(
+                    seasonSelect,
+                    [...new Set(payload.trips.map((trip) => trip.bestSeason).filter(Boolean))]
+                );
                 renderTrips(payload.trips);
-                // 2-Filters: Show the empty state when valid filters/search return no matches.
-                emptyEl.hidden = payload.trips.length > 0;
+                applyFilters();
 
                 // 1-Pagination: Update button states and page count from API metadata.
                 currentPage = payload.pagination.page;
@@ -188,14 +176,8 @@ const hookTripsCatalog = async () => {
             }
         };
 
-        // 2-Filters: Re-run the filtered query from page 1 when either dropdown changes.
-        regionSelect.addEventListener('change', () => loadTrips(1));
-        seasonSelect.addEventListener('change', () => loadTrips(1));
-        // 2-Filters: Submit keyword searches from page 1 while retaining the selected dropdown filters.
-        searchForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            loadTrips(1);
-        });
+        regionSelect.addEventListener('change', applyFilters);
+        seasonSelect.addEventListener('change', applyFilters);
 
         // 1-Pagination: Load the previous page only when one is available.
         previousButton.addEventListener('click', () => {

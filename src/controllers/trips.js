@@ -1,8 +1,7 @@
 import { getDb } from '../db/connect.js';
 import {
     getTripById as findTripById,
-    getPaginatedTrips,
-    getTripFilterOptions
+    getPaginatedTrips
 } from '../models/trips.js';
 
 // 1-Pagination: Limit sorting to fields supported by the trips API.
@@ -71,78 +70,17 @@ export async function getAllTrips(req, res) {
             });
         }
 
-        const filter = {};
-        let searchText;
-
-        // 2-Filters: Validate and normalize the optional search text before adding it to the MongoDB query.
-        if (req.query.q !== undefined) {
-            if (typeof req.query.q !== 'string') {
-                return res.status(400).json({
-                    errors: [{ field: 'q', message: 'Search text must be a single string.' }]
-                });
-            }
-
-            searchText = req.query.q.trim();
-            if (searchText.length < 1 || searchText.length > 100) {
-                return res.status(400).json({
-                    errors: [{ field: 'q', message: 'Search text must be between 1 and 100 characters.' }]
-                });
-            }
-
-            // 2-Filters: Search the schema's text-indexed trip name and description fields.
-            filter.$text = { $search: searchText };
-        }
-
-        // 2-Filters: Load supported region and season values before validating exact-match filters.
-        const filterOptions = await getTripFilterOptions();
-
-        // 2-Filters: Map public query parameters to supported trip fields and allowed dropdown values.
-        const exactFilters = [
-            { queryField: 'region', modelField: 'region', allowedValues: filterOptions.regions },
-            { queryField: 'season', modelField: 'bestSeason', allowedValues: filterOptions.seasons }
-        ];
-        for (const { queryField, modelField, allowedValues } of exactFilters) {
-            const value = req.query[queryField];
-            if (value === undefined) {
-                continue;
-            }
-
-            if (typeof value !== 'string' || value.trim().length === 0) {
-                return res.status(400).json({
-                    errors: [{ field: queryField, message: `${queryField} is not supported.` }]
-                });
-            }
-
-            const normalizedValue = value.trim();
-            if (!allowedValues.includes(normalizedValue)) {
-                return res.status(400).json({
-                    errors: [{ field: queryField, message: `${queryField} is not supported.` }]
-                });
-            }
-
-            // 2-Filters: Add the validated exact-match value to the model query.
-            filter[modelField] = normalizedValue;
-        }
-
-        // 1-Pagination: Ask the model for the requested slice and filtered total count.
+        // 1-Pagination: Ask the model for the requested slice and total trip count.
         const result = await getPaginatedTrips({
-            filter,
             page,
             limit,
             sort,
             order: requestedOrder === 'asc' ? 1 : -1
         });
 
-        // 1-Pagination: Return page data and navigation metadata.
-        // 2-Filters: Echo the normalized search, applied filters, and available dropdown options.
+        // 1-Pagination: Return page data plus the metadata needed to drive page controls.
         return res.status(200).json({
             trips: result.trips,
-            query: {
-                q: searchText ?? null,
-                region: filter.region ?? null,
-                season: filter.bestSeason ?? null
-            },
-            filters: filterOptions,
             pagination: {
                 // 1-Pagination: Echo the selected page and page size to the client.
                 page,

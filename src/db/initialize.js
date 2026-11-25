@@ -34,9 +34,6 @@ const initializeDatabase = async (db) => {
     await collection.insertMany(documents);
   }
 
-  // 2-Filters: Ensure MongoDB can search trip names and descriptions after database initialization.
-  await db.collection('trips').createIndex({ name: 'text', description: 'text' });
-
   const existingCollections = await db.listCollections({}, { nameOnly: true }).toArray();
   const collectionNames = existingCollections.map((collection) => collection.name);
 

@@ -2,29 +2,15 @@
 <h1><%- title %></h1>
 
 <div id="filters">
-    <!-- 2-Filters: Let clients narrow results by the trip's exact region or best season. -->
-    <label for="region-filter">Search by Region:</label>
+    Search by Region:
     <select id="region-filter">
         <option value="all">All Regions</option>
     </select>
 
-    <label for="season-filter">Search by Season:</label>
+    Search by Season:
     <select id="season-filter">
         <option value="all">Any Season</option>
     </select>
-
-    <!-- 2-Filters: Submit a keyword to search trip names and descriptions. -->
-    <form id="trip-search-form" role="search">
-        <label for="trip-search">Search trips:</label>
-        <input
-            type="search"
-            id="trip-search"
-            name="q"
-            maxlength="100"
-            placeholder="Search names or descriptions"
-        >
-        <button type="submit">Search</button>
-    </form>
 </div>
 
 <div class="trains-state" id="trips-loading">Loading trips...</div>

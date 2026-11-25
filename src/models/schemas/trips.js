@@ -66,9 +66,6 @@ const tripSchema = new mongoose.Schema(
     }
 );
 
-// 2-Filters: Index trip names and descriptions for MongoDB full-text searches.
-tripSchema.index({ name: 'text', description: 'text' });
-
 const Trip = mongoose.model('Trip', tripSchema);
 
 export default Trip;
