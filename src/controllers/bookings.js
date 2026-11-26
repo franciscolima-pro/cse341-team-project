@@ -1,6 +1,7 @@
 
 import { getDb } from '../db/connect.js';
 import { generateConfirmationCode } from '../includes/helpers.js';
+
 import {
     createBooking,
     getBookingById,
@@ -9,14 +10,24 @@ import {
 
 const bookingPage = async (req, res) => {
     const { scheduleId } = req.params;
-
     const db = getDb();
+
     const schedule = await db.collection('schedules').findOne({
         id: Number(scheduleId)
     });
+
+    if (!schedule) {
+        return res.status(404).send('Schedule not found');
+    }
+
     const trip = await db.collection('trips').findOne({
         id: schedule.tripId
     });
+
+    if (!trip) {
+        return res.status(404).send('Trip not found');
+    }
+
     const ticketClasses = await db.collection('ticketClasses').find({}).toArray();
 
     const ticketOptions = ticketClasses.map((ticketClass) => ({
@@ -27,7 +38,7 @@ const bookingPage = async (req, res) => {
         description: ticketClass.description
     }));
 
-    res.render('trips/book', {
+    return res.render('trips/book', {
         title: 'Book Trip',
         schedule,
         ticketOptions
@@ -45,9 +56,8 @@ const processBookingRequest = async (req, res) => {
 
     await createBooking(booking);
 
-    res.redirect(`/trips/confirmation/${booking.id}`);
+    return res.redirect(`/trips/confirmation/${booking.id}`);
 };
-
 
 const confirmationPage = async (req, res) => {
     const { confirmationId } = req.params;
@@ -58,16 +68,116 @@ const confirmationPage = async (req, res) => {
     }
 
     return res.render('trips/confirm', {
-    title: 'Trip Confirmation',
-    confirmation
+        title: 'Trip Confirmation',
+        confirmation
     });
+};
+
+const allowedSortFields = [
+    'id',
+    'scheduleId',
+    'tripId',
+    'ticketClass',
+    'selectedDay',
+    'createdAt'
+];
+
+const allowedQueryParams = [
+    'page',
+    'limit',
+    'q',
+    'sort',
+    'order'
+];
+
+const parsePositiveInteger = (
+    value,
+    defaultValue,
+    maximum = Number.MAX_SAFE_INTEGER
+) => {
+    if (value === undefined) {
+        return defaultValue;
+    }
+
+    if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
+        return null;
+    }
+
+    const number = Number(value);
+
+    if (!Number.isSafeInteger(number) || number > maximum) {
+        return null;
+    }
+
+    return number;
 };
 
 const getAllBookingsController = async (req, res) => {
     try {
-        const bookings = await getAllBookings();
-        return res.status(200).json(bookings);
+        const invalidParam = Object.keys(req.query).find(
+            (param) => !allowedQueryParams.includes(param)
+        );
+
+        if (invalidParam) {
+            return res.status(400).json({
+                error: `Invalid query parameter: ${invalidParam}`
+            });
+        }
+
+        const page = parsePositiveInteger(req.query.page, 1);
+        const limit = parsePositiveInteger(req.query.limit, 10, 50);
+
+        const q = req.query.q ?? '';
+        const sort = req.query.sort ?? 'createdAt';
+        const order = req.query.order ?? 'desc';
+
+        if (page === null || limit === null) {
+            return res.status(400).json({
+                error: 'Page must be positive and limit must be between 1 and 50.'
+            });
+        }
+
+        if (typeof q !== 'string') {
+            return res.status(400).json({
+                error: 'Search query must be a string.'
+            });
+        }
+
+        if (!allowedSortFields.includes(sort)) {
+            return res.status(400).json({
+                error: 'Invalid sort field.'
+            });
+        }
+
+        if (!['asc', 'desc'].includes(order)) {
+            return res.status(400).json({
+                error: 'Order must be asc or desc.'
+            });
+        }
+
+        const query = {
+            page,
+            limit,
+            q: q.trim(),
+            sort,
+            order
+        };
+
+        const { data, total } = await getAllBookings(query);
+
+        return res.status(200).json({
+            data,
+            query,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
+        console.error('Error retrieving bookings:', error);
+
         return res.status(500).json({
             message: 'Error retrieving bookings',
             error: error.message
@@ -76,7 +186,7 @@ const getAllBookingsController = async (req, res) => {
 };
 
 const bookingsAdminPage = (req, res) => {
-    res.render('bookings', {
+    return res.render('bookings', {
         title: 'Manage Bookings'
     });
 };
@@ -88,4 +198,3 @@ export {
     getAllBookingsController,
     bookingsAdminPage
 };
-
