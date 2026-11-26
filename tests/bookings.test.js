@@ -4,7 +4,7 @@ import request from 'supertest';
 import app from '../app.js';
 import { createBooking } from '../src/models/bookings.js';
 
-const makeBooking = (id, firstName = 'Alice') => ({
+const makeBooking = (id) => ({
     id,
     scheduleId: 1,
     tripId: '1',
@@ -12,9 +12,9 @@ const makeBooking = (id, firstName = 'Alice') => ({
     selectedDay: '2026-12-01',
     passengers: [
         {
-            firstName,
+            firstName: 'Alice',
             lastName: 'Smith',
-            email: `${firstName.toLowerCase()}${id}@example.com`,
+            email: `${id.toLowerCase()}@example.com`,
             phone: '0123456789'
         }
     ]
@@ -31,10 +31,7 @@ describe('Bookings API pagination', () => {
         expect(response.body.data).toHaveLength(2);
         expect(response.body.query).toEqual({
             page: 1,
-            limit: 10,
-            q: '',
-            sort: 'createdAt',
-            order: 'desc'
+            limit: 10
         });
         expect(response.body.pagination).toEqual({
             total: 2,
@@ -46,7 +43,9 @@ describe('Bookings API pagination', () => {
 
     test('returns the requested page and limit', async () => {
         for (let i = 1; i <= 12; i++) {
-            await createBooking(makeBooking(`BOOK${String(i).padStart(3, '0')}`));
+            await createBooking(
+                makeBooking(`BOOK${String(i).padStart(3, '0')}`)
+            );
         }
 
         const response = await request(app)
@@ -57,52 +56,29 @@ describe('Bookings API pagination', () => {
         expect(response.body.pagination.total).toBe(12);
         expect(response.body.pagination.totalPages).toBe(2);
         expect(response.body.pagination.page).toBe(2);
+        expect(response.body.pagination.limit).toBe(10);
     });
 
-    test('searches bookings by passenger information', async () => {
-        await createBooking(makeBooking('BOOK001', 'Alice'));
-        await createBooking(makeBooking('BOOK002', 'James'));
-
-        const response = await request(app)
-            .get('/api/bookings?q=alice');
-
-        expect(response.status).toBe(200);
-        expect(response.body.data).toHaveLength(1);
-        expect(response.body.data[0].id).toBe('BOOK001');
-    });
-
-    test('returns an empty array when no bookings match', async () => {
-        const response = await request(app)
-            .get('/api/bookings?q=nonexistent');
+    test('returns an empty array when no bookings exist', async () => {
+        const response = await request(app).get('/api/bookings');
 
         expect(response.status).toBe(200);
         expect(response.body.data).toEqual([]);
         expect(response.body.pagination.total).toBe(0);
-    });
-
-    test('sorts bookings by ID in ascending order', async () => {
-        await createBooking(makeBooking('BOOK003'));
-        await createBooking(makeBooking('BOOK001'));
-        await createBooking(makeBooking('BOOK002'));
-
-        const response = await request(app)
-            .get('/api/bookings?sort=id&order=asc');
-
-        expect(response.status).toBe(200);
-        expect(response.body.data.map((item) => item.id)).toEqual([
-            'BOOK001',
-            'BOOK002',
-            'BOOK003'
-        ]);
+        expect(response.body.pagination.totalPages).toBe(0);
     });
 
     test.each([
         'page=0',
+        'page=abc',
+        'limit=0',
         'limit=51',
-        'sort=invalid',
-        'order=invalid',
-        'unknown=value'
-    ])('rejects invalid query parameters: %s', async (query) => {
+        'limit=abc',
+        'unknown=value',
+        'q=alice',
+        'sort=id',
+        'order=asc'
+    ])('rejects invalid or unsupported query parameters: %s', async (query) => {
         const response = await request(app)
             .get(`/api/bookings?${query}`);
 

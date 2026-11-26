@@ -1,4 +1,3 @@
-
 import booking from './schemas/bookings.js';
 
 export async function createBooking(bookingData) {
@@ -8,34 +7,13 @@ export async function createBooking(bookingData) {
 
 export async function getAllBookings({
     page = 1,
-    limit = 10,
-    q = '',
-    sort = 'createdAt',
-    order = 'desc'
+    limit = 10
 } = {}) {
     const filter = {};
 
-    if (q) {
-        const searchRegex = new RegExp(
-            q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-            'i'
-        );
-
-        filter.$or = [
-            { id: searchRegex },
-            { tripId: searchRegex },
-            { ticketClass: searchRegex },
-            { 'passengers.firstName': searchRegex },
-            { 'passengers.lastName': searchRegex },
-            { 'passengers.email': searchRegex }
-        ];
-    }
-
-    const sortOrder = order === 'asc' ? 1 : -1;
-
     const [data, total] = await Promise.all([
         booking.find(filter)
-            .sort({ [sort]: sortOrder })
+            .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
             .lean(),

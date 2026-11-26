@@ -136,32 +136,67 @@ router.get('/trips', getAllTrips);
  */
 router.get('/trips/:id', getTripById);
 
+
 /**
  * @swagger
  * /api/bookings:
  *   get:
- *     summary: Get all bookings
+ *     summary: Get bookings with pagination
+ *     description: Returns bookings sorted by booking date, newest first, with pagination metadata.
+ *     tags:
+ *       - Bookings
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number to retrieve.
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         description: Number of bookings per page.
  *     responses:
  *       200:
- *         description: A list of bookings
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Booking'
- *       500:
- *         description: Failed to fetch bookings
+ *         description: Paginated list of bookings.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
- *                 error:
- *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Booking'
+ *                 query:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       400:
+ *         description: Invalid pagination or unsupported query parameter.
+ *       500:
+ *         description: Failed to fetch bookings.
  */
+
 router.get('/bookings', getAllBookingsController);
 
 router.get('/trains', trainsApi);

@@ -1,4 +1,3 @@
-
 <%- include('partials/header') %>
 
 <main class="bookings-admin-page">
@@ -11,28 +10,6 @@
 
     <section class="booking-details">
         <h2 class="section-title">All Bookings</h2>
-
-        <div class="booking-controls">
-            <input
-                type="search"
-                id="booking-search"
-                placeholder="Search bookings..."
-            >
-
-            <select id="booking-sort">
-                <option value="createdAt">Date booked</option>
-                <option value="id">Booking ID</option>
-                <option value="ticketClass">Ticket class</option>
-                <option value="selectedDay">Travel day</option>
-            </select>
-
-            <select id="booking-order">
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
-            </select>
-
-            <button type="button" id="search-bookings">Search</button>
-        </div>
 
         <p id="booking-count"></p>
 
@@ -61,16 +38,9 @@
     async function loadBookings() {
         const bookingsList = document.getElementById('bookings-list');
 
-        const search = document.getElementById('booking-search').value.trim();
-        const sort = document.getElementById('booking-sort').value;
-        const order = document.getElementById('booking-order').value;
-
         const params = new URLSearchParams({
             page: currentPage,
-            limit: pageLimit,
-            q: search,
-            sort,
-            order
+            limit: pageLimit
         });
 
         bookingsList.textContent = 'Loading bookings...';
@@ -142,28 +112,6 @@
             bookingsList.textContent = error.message;
         }
     }
-
-    document.getElementById('search-bookings').addEventListener('click', () => {
-        currentPage = 1;
-        loadBookings();
-    });
-
-    document.getElementById('booking-search').addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            currentPage = 1;
-            loadBookings();
-        }
-    });
-
-    document.getElementById('booking-sort').addEventListener('change', () => {
-        currentPage = 1;
-        loadBookings();
-    });
-
-    document.getElementById('booking-order').addEventListener('change', () => {
-        currentPage = 1;
-        loadBookings();
-    });
 
     document.getElementById('previous-page').addEventListener('click', () => {
         if (currentPage > 1) {

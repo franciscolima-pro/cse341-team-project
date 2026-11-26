@@ -73,22 +73,7 @@ const confirmationPage = async (req, res) => {
     });
 };
 
-const allowedSortFields = [
-    'id',
-    'scheduleId',
-    'tripId',
-    'ticketClass',
-    'selectedDay',
-    'createdAt'
-];
-
-const allowedQueryParams = [
-    'page',
-    'limit',
-    'q',
-    'sort',
-    'order'
-];
+const allowedQueryParams = ['page', 'limit'];
 
 const parsePositiveInteger = (
     value,
@@ -127,47 +112,23 @@ const getAllBookingsController = async (req, res) => {
         const page = parsePositiveInteger(req.query.page, 1);
         const limit = parsePositiveInteger(req.query.limit, 10, 50);
 
-        const q = req.query.q ?? '';
-        const sort = req.query.sort ?? 'createdAt';
-        const order = req.query.order ?? 'desc';
-
         if (page === null || limit === null) {
             return res.status(400).json({
                 error: 'Page must be positive and limit must be between 1 and 50.'
             });
         }
 
-        if (typeof q !== 'string') {
-            return res.status(400).json({
-                error: 'Search query must be a string.'
-            });
-        }
-
-        if (!allowedSortFields.includes(sort)) {
-            return res.status(400).json({
-                error: 'Invalid sort field.'
-            });
-        }
-
-        if (!['asc', 'desc'].includes(order)) {
-            return res.status(400).json({
-                error: 'Order must be asc or desc.'
-            });
-        }
-
-        const query = {
+        const { data, total } = await getAllBookings({
             page,
-            limit,
-            q: q.trim(),
-            sort,
-            order
-        };
-
-        const { data, total } = await getAllBookings(query);
+            limit
+        });
 
         return res.status(200).json({
             data,
-            query,
+            query: {
+                page,
+                limit
+            },
             pagination: {
                 total,
                 page,
