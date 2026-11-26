@@ -12,33 +12,103 @@
     <section class="booking-details">
         <h2 class="section-title">All Bookings</h2>
 
+        <form id="booking-filters">
+            <div>
+                <label for="ticket-class">Ticket Class</label>
+                <input
+                    type="text"
+                    id="ticket-class"
+                    name="ticketClass"
+                    placeholder="Enter ticket class"
+                >
+            </div>
+
+            <div>
+                <label for="start-date">Start Date</label>
+                <input
+                    type="date"
+                    id="start-date"
+                    name="startDate"
+                >
+            </div>
+
+            <div>
+                <label for="end-date">End Date</label>
+                <input
+                    type="date"
+                    id="end-date"
+                    name="endDate"
+                >
+            </div>
+
+            <button type="submit">Apply Filters</button>
+            <button type="reset" id="clear-filters">Clear Filters</button>
+        </form>
+
+        <p id="booking-count"></p>
+
         <div id="bookings-list">
-            <p id="loading-message">Loading bookings...</p>
+            <p>Loading bookings...</p>
+        </div>
+
+        <div id="booking-pagination">
+            <button type="button" id="previous-page" disabled>
+                Previous
+            </button>
+
+            <span id="page-info">Page 1</span>
+
+            <button type="button" id="next-page" disabled>
+                Next
+            </button>
         </div>
     </section>
 </main>
 
 <script>
+    let currentPage = 1;
+    const pageLimit = 10;
+
+    const filterForm = document.getElementById('booking-filters');
+
     async function loadBookings() {
         const bookingsList = document.getElementById('bookings-list');
 
+        const params = new URLSearchParams({
+            page: currentPage,
+            limit: pageLimit
+        });
+
+        const ticketClass = document.getElementById('ticket-class').value.trim();
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        if (ticketClass) params.set('ticketClass', ticketClass);
+        if (startDate) params.set('startDate', startDate);
+        if (endDate) params.set('endDate', endDate);
+
+        bookingsList.textContent = 'Loading bookings...';
+
         try {
-            const response = await fetch('/api/bookings');
+            const response = await fetch(`/api/bookings?${params}`);
 
             if (!response.ok) {
-                throw new Error('Failed to load bookings.');
+                const errorResult = await response.json();
+                throw new Error(
+                    errorResult.error || 'Failed to load bookings.'
+                );
             }
 
-            const bookings = await response.json();
-
-            if (bookings.length === 0) {
-                bookingsList.textContent = 'No bookings found.';
-                return;
-            }
+            const result = await response.json();
+            const { data, pagination } = result;
 
             bookingsList.innerHTML = '';
 
-            bookings.forEach((booking) => {
+            if (data.length === 0) {
+                bookingsList.textContent = 'No bookings found.';
+            }
+
+            data.forEach((booking) => {
                 const card = document.createElement('article');
                 card.className = 'detail-card';
 
@@ -63,17 +133,55 @@
 
                 booking.passengers.forEach((passenger, index) => {
                     const passengerInfo = document.createElement('p');
+
                     passengerInfo.textContent =
                         `Passenger ${index + 1}: ${passenger.firstName} ${passenger.lastName} — ${passenger.email}`;
+
                     card.appendChild(passengerInfo);
                 });
 
                 bookingsList.appendChild(card);
             });
+
+            document.getElementById('booking-count').textContent =
+                `Total bookings: ${pagination.total}`;
+
+            document.getElementById('page-info').textContent =
+                `Page ${pagination.page} of ${pagination.totalPages}`;
+
+            document.getElementById('previous-page').disabled =
+                currentPage <= 1;
+
+            document.getElementById('next-page').disabled =
+                currentPage >= pagination.totalPages;
+
         } catch (error) {
             bookingsList.textContent = error.message;
         }
     }
+
+    filterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        currentPage = 1;
+        loadBookings();
+    });
+
+    filterForm.addEventListener('reset', () => {
+        currentPage = 1;
+        setTimeout(loadBookings, 0);
+    });
+
+    document.getElementById('previous-page').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadBookings();
+        }
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
+        currentPage++;
+        loadBookings();
+    });
 
     loadBookings();
 </script>
