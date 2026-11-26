@@ -141,8 +141,8 @@ router.get('/trips/:id', getTripById);
  * @swagger
  * /api/bookings:
  *   get:
- *     summary: Get bookings with pagination
- *     description: Returns bookings sorted by booking date, newest first, with pagination metadata.
+ *     summary: Get bookings with pagination and filtering
+ *     description: Returns bookings sorted by booking date, newest first. Supports filtering by ticket class and travel date range while retaining pagination.
  *     tags:
  *       - Bookings
  *     parameters:
@@ -161,9 +161,26 @@ router.get('/trips/:id', getTripById);
  *           maximum: 50
  *           default: 10
  *         description: Number of bookings per page.
+ *       - in: query
+ *         name: ticketClass
+ *         schema:
+ *           type: string
+ *         description: Filter bookings by ticket class.
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Include bookings with a travel date on or after this date.
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Include bookings with a travel date on or before this date.
  *     responses:
  *       200:
- *         description: Paginated list of bookings.
+ *         description: Filtered and paginated list of bookings.
  *         content:
  *           application/json:
  *             schema:
@@ -180,6 +197,15 @@ router.get('/trips/:id', getTripById);
  *                       type: integer
  *                     limit:
  *                       type: integer
+ *                     ticketClass:
+ *                       type: string
+ *                       nullable: true
+ *                     startDate:
+ *                       type: string
+ *                       nullable: true
+ *                     endDate:
+ *                       type: string
+ *                       nullable: true
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -192,10 +218,11 @@ router.get('/trips/:id', getTripById);
  *                     totalPages:
  *                       type: integer
  *       400:
- *         description: Invalid pagination or unsupported query parameter.
+ *         description: Invalid filter, pagination value, or unsupported query parameter.
  *       500:
  *         description: Failed to fetch bookings.
  */
+
 
 router.get('/bookings', getAllBookingsController);
 

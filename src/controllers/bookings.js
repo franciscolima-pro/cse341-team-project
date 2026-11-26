@@ -73,16 +73,21 @@ const confirmationPage = async (req, res) => {
     });
 };
 
-const allowedQueryParams = ['page', 'limit'];
+
+const allowedQueryParams = [
+    'page',
+    'limit',
+    'ticketClass',
+    'startDate',
+    'endDate'
+];
 
 const parsePositiveInteger = (
     value,
     defaultValue,
     maximum = Number.MAX_SAFE_INTEGER
 ) => {
-    if (value === undefined) {
-        return defaultValue;
-    }
+    if (value === undefined) return defaultValue;
 
     if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
         return null;
@@ -97,6 +102,17 @@ const parsePositiveInteger = (
     return number;
 };
 
+const isValidDate = (value) => {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const date = new Date(`${value}T00:00:00.000Z`);
+
+    return !Number.isNaN(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value;
+};
+
 const getAllBookingsController = async (req, res) => {
     try {
         const invalidParam = Object.keys(req.query).find(
@@ -109,6 +125,8 @@ const getAllBookingsController = async (req, res) => {
             });
         }
 
+        const { ticketClass, startDate, endDate } = req.query;
+
         const page = parsePositiveInteger(req.query.page, 1);
         const limit = parsePositiveInteger(req.query.limit, 10, 50);
 
@@ -118,16 +136,48 @@ const getAllBookingsController = async (req, res) => {
             });
         }
 
+        if (
+            ticketClass !== undefined &&
+            (typeof ticketClass !== 'string' || !ticketClass.trim())
+        ) {
+            return res.status(400).json({
+                error: 'Ticket class must be a non-empty string.'
+            });
+        }
+
+        if (
+            (startDate !== undefined && !isValidDate(startDate)) ||
+            (endDate !== undefined && !isValidDate(endDate))
+        ) {
+            return res.status(400).json({
+                error: 'Dates must be valid dates in YYYY-MM-DD format.'
+            });
+        }
+
+        if (startDate && endDate && startDate > endDate) {
+            return res.status(400).json({
+                error: 'Start date cannot be after end date.'
+            });
+        }
+
+        const filters = {
+            ticketClass: ticketClass?.trim(),
+            startDate,
+            endDate
+        };
+
         const { data, total } = await getAllBookings({
             page,
-            limit
+            limit,
+            ...filters
         });
 
         return res.status(200).json({
             data,
             query: {
                 page,
-                limit
+                limit,
+                ...filters
             },
             pagination: {
                 total,
@@ -145,6 +195,7 @@ const getAllBookingsController = async (req, res) => {
         });
     }
 };
+
 
 const bookingsAdminPage = (req, res) => {
     return res.render('bookings', {

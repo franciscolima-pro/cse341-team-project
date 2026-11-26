@@ -1,3 +1,4 @@
+
 import booking from './schemas/bookings.js';
 
 export async function createBooking(bookingData) {
@@ -7,9 +8,28 @@ export async function createBooking(bookingData) {
 
 export async function getAllBookings({
     page = 1,
-    limit = 10
+    limit = 10,
+    ticketClass,
+    startDate,
+    endDate
 } = {}) {
     const filter = {};
+
+    if (ticketClass) {
+        filter.ticketClass = ticketClass;
+    }
+
+    if (startDate || endDate) {
+        filter.selectedDay = {};
+
+        if (startDate) {
+            filter.selectedDay.$gte = startDate;
+        }
+
+        if (endDate) {
+            filter.selectedDay.$lte = endDate;
+        }
+    }
 
     const [data, total] = await Promise.all([
         booking.find(filter)
