@@ -3,44 +3,54 @@ const hookTripsCatalog = async () => {
     const templateEl = document.getElementById('trip-card-template');
     const regionSelect = document.getElementById('region-filter');
     const seasonSelect = document.getElementById('season-filter');
+    const searchForm = document.getElementById('trip-search-form');
+    const searchInput = document.getElementById('trip-search');
 
-    if (listEl && templateEl && regionSelect && seasonSelect) {
+    if (listEl && templateEl && regionSelect && seasonSelect && searchForm && searchInput) {
         const loadingEl = document.getElementById('trips-loading');
         const errorEl = document.getElementById('trips-error');
         const emptyEl = document.getElementById('trips-empty');
+        const paginationEl = document.getElementById('trips-pagination');
+        const previousButton = document.getElementById('trips-previous');
+        const nextButton = document.getElementById('trips-next');
+        const pageStatusEl = document.getElementById('trips-page-status');
 
-        try {
-            const response = await fetch('/api/trips');
-            if (!response.ok) {
-                throw new Error(`Failed to load trips (${response.status})`);
-            }
+        // 1-Pagination: Read the requested starting page from the URL, defaulting to page 1.
+        const query = new URLSearchParams(window.location.search);
+        const requestedPage = Number(query.get('page'));
+        let currentPage = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+        // 2-Filters: Restore search text from the URL when the list page is opened directly.
+        searchInput.value = query.get('q') ?? '';
 
-            const payload = await response.json();
-            if (!Array.isArray(payload.trips)) {
-                throw new Error('Trip response did not contain a trips list');
-            }
+        // 1-Pagination: Track requests so an older response cannot overwrite a newer page.
+        let requestId = 0;
+        // 2-Filters: Populate dropdowns once with all supported filter values from the API.
+        let filtersInitialized = false;
 
-            const regionParam = new URLSearchParams(window.location.search).get('region');
-            const seasonParam = new URLSearchParams(window.location.search).get('season');
-            const regions = [...new Set(payload.trips.map((trip) => trip.region).filter(Boolean))].sort();
-            const seasons = [...new Set(payload.trips.map((trip) => trip.bestSeason).filter(Boolean))].sort();
-
-            const addFilterOptions = (select, values, initialValue) => {
-                values.forEach((value) => {
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value.charAt(0).toUpperCase() + value.slice(1);
-                    select.append(option);
-                });
-                if (values.includes(initialValue)) {
-                    select.value = initialValue;
+        // 2-Filters: Add available values and restore a matching filter from the URL.
+        const addFilterOptions = (select, values, initialValue) => {
+            const existingValues = new Set(
+                [...select.options].map((option) => option.value)
+            );
+            values.forEach((value) => {
+                if (existingValues.has(value)) {
+                    return;
                 }
-            };
-            addFilterOptions(regionSelect, regions, regionParam);
-            addFilterOptions(seasonSelect, seasons, seasonParam);
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+                select.append(option);
+                existingValues.add(value);
+            });
+            if (values.includes(initialValue)) {
+                select.value = initialValue;
+            }
+        };
 
+        // 1-Pagination: Render only the trips returned for the currently selected page.
+        const renderTrips = (trips) => {
             const fragment = document.createDocumentFragment();
-            payload.trips.forEach((trip) => {
+            trips.forEach((trip) => {
                 const card = templateEl.content.cloneNode(true);
                 const cardEl = card.querySelector('.route-card');
                 const setText = (field, value) => {
@@ -76,35 +86,129 @@ const hookTripsCatalog = async () => {
                     `/trips/${encodeURIComponent(trip.id)}`;
                 fragment.append(card);
             });
-
             listEl.replaceChildren(fragment);
+        };
 
-            const applyFilters = () => {
-                let visibleTrips = 0;
-                listEl.querySelectorAll('.route-card').forEach((card) => {
-                    const matchesRegion =
-                        regionSelect.value === 'all' || card.querySelector('.route-region').textContent === regionSelect.value;
-                    const matchesSeason =
-                        seasonSelect.value === 'all' ||
-                        card.querySelector('[data-field="season-label"]').textContent === seasonSelect.value;
-                    card.hidden = !matchesRegion || !matchesSeason;
-                    if (!card.hidden) {
-                        visibleTrips += 1;
-                    }
-                });
-                emptyEl.hidden = visibleTrips > 0;
-            };
+        // 1-Pagination: Request one page from the API and update the trip list and controls.
+        const loadTrips = async (page) => {
+            const currentRequestId = ++requestId;
+            currentPage = page;
 
-            regionSelect.addEventListener('change', applyFilters);
-            seasonSelect.addEventListener('change', applyFilters);
-            applyFilters();
-        } catch (error) {
-            console.error('Error loading trips:', error);
-            errorEl.hidden = false;
-            errorEl.textContent = 'Unable to load trips right now. Please try again in a moment.';
-        } finally {
-            loadingEl.hidden = true;
-        }
+            // 1-Pagination: Show loading feedback and disable controls during the request.
+            loadingEl.hidden = false;
+            errorEl.hidden = true;
+            emptyEl.hidden = true;
+            previousButton.disabled = true;
+            nextButton.disabled = true;
+            paginationEl.hidden = true;
+
+            // 1-Pagination: Request 10 trips for the selected page.
+            const params = new URLSearchParams({ page: String(page), limit: '10' });
+            // 2-Filters: Send active keyword and exact-match dropdown values with each page request.
+            const searchText = searchInput.value.trim();
+            const selectedRegion = regionSelect.value !== 'all'
+                ? regionSelect.value
+                : (!filtersInitialized ? query.get('region') : null);
+            const selectedSeason = seasonSelect.value !== 'all'
+                ? seasonSelect.value
+                : (!filtersInitialized ? query.get('season') : null);
+            if (searchText) {
+                params.set('q', searchText);
+            }
+            if (selectedRegion && selectedRegion !== 'all') {
+                params.set('region', selectedRegion);
+            }
+            if (selectedSeason && selectedSeason !== 'all') {
+                params.set('season', selectedSeason);
+            }
+
+            try {
+                // 1-Pagination: Fetch the requested page; 2-Filters: Include the active search and filters.
+                const response = await fetch(`/api/trips?${params}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load trips (${response.status})`);
+                }
+
+                const payload = await response.json();
+                // 1-Pagination: Require page data and metadata; 2-Filters: Require filter choices for dropdowns.
+                if (!Array.isArray(payload.trips) || !payload.pagination
+                    || !Array.isArray(payload.filters?.regions)
+                    || !Array.isArray(payload.filters?.seasons)) {
+                    throw new Error('Trip response did not contain the expected data');
+                }
+
+                // 1-Pagination: Ignore responses from requests superseded by a later page selection.
+                if (currentRequestId !== requestId) {
+                    return;
+                }
+
+                // 1-Pagination: Recover to the last available page if the requested page no longer exists.
+                if (page > payload.pagination.totalPages && payload.pagination.totalPages > 0) {
+                    loadTrips(payload.pagination.totalPages);
+                    return;
+                }
+                // 1-Pagination: Return to page 1 when the collection has no records.
+                if (page > 1 && payload.pagination.totalPages === 0) {
+                    loadTrips(1);
+                    return;
+                }
+
+                // 2-Filters: Populate both menus from all available values, not just this result page.
+                if (!filtersInitialized) {
+                    addFilterOptions(regionSelect, payload.filters.regions, query.get('region'));
+                    addFilterOptions(seasonSelect, payload.filters.seasons, query.get('season'));
+                    filtersInitialized = true;
+                }
+
+                renderTrips(payload.trips);
+                // 2-Filters: Show the empty state when valid filters/search return no matches.
+                emptyEl.hidden = payload.trips.length > 0;
+
+                // 1-Pagination: Update button states and page count from API metadata.
+                currentPage = payload.pagination.page;
+                previousButton.disabled = !payload.pagination.hasPreviousPage;
+                nextButton.disabled = !payload.pagination.hasNextPage;
+                pageStatusEl.textContent =
+                    `Page ${payload.pagination.page} of ${payload.pagination.totalPages} `
+                    + `(${payload.pagination.totalItems} trips)`;
+                paginationEl.hidden = payload.pagination.totalPages <= 1;
+            } catch (error) {
+                // 1-Pagination: Ignore failures from requests that are no longer current.
+                if (currentRequestId !== requestId) {
+                    return;
+                }
+                console.error('Error loading trips:', error);
+                errorEl.hidden = false;
+                errorEl.textContent = 'Unable to load trips right now. Please try again in a moment.';
+            } finally {
+                // 1-Pagination: Hide loading feedback only for the latest request.
+                if (currentRequestId === requestId) {
+                    loadingEl.hidden = true;
+                }
+            }
+        };
+
+        // 2-Filters: Re-run the filtered query from page 1 when either dropdown changes.
+        regionSelect.addEventListener('change', () => loadTrips(1));
+        seasonSelect.addEventListener('change', () => loadTrips(1));
+        // 2-Filters: Submit keyword searches from page 1 while retaining the selected dropdown filters.
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            loadTrips(1);
+        });
+
+        // 1-Pagination: Load the previous page only when one is available.
+        previousButton.addEventListener('click', () => {
+            if (currentPage > 1) {
+                loadTrips(currentPage - 1);
+            }
+        });
+
+        // 1-Pagination: Request the next page when the next button is activated.
+        nextButton.addEventListener('click', () => loadTrips(currentPage + 1));
+
+        // 1-Pagination: Load the page requested in the URL or the default first page.
+        loadTrips(currentPage);
         return;
     }
 
